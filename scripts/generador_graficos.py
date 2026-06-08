@@ -7,7 +7,7 @@ from matplotlib.cm import ScalarMappable
 import numpy as np
 import os
 
-# --- Configuración visual (dark theme como referencia) ---
+# --- Configuración visual (dark theme) ---
 plt.rcParams.update({
     "figure.facecolor":  "#0d1117",
     "axes.facecolor":    "#161b22",
@@ -24,8 +24,8 @@ plt.rcParams.update({
     "font.family":       "DejaVu Sans",
 })
 
-MESES      = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
-              "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+MESES       = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+               "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
 MESES_LABEL = ["Ene","Feb","Mar","Abr","May","Jun",
                "Jul","Ago","Sep","Oct","Nov","Dic"]
 
@@ -37,15 +37,15 @@ prec = df[df["VARIABLE"] == "PRECIPITACIONES"].set_index("ORIGEN")[MESES].apply(
 
 os.makedirs("resultados", exist_ok=True)
 
-# Paleta de estaciones destacadas (igual a la referencia)
+# Estaciones destacadas con color
 ESTACIONES_DESTACADAS = {
-    "JUJUY AERO":              ("#ff6b6b", "Jujuy"),
-    "TUCUMAN AERO":            ("#ffa94d", "Tucumán"),
-    "CORDOBA AERO":            ("#63e6be", "Córdoba"),
-    "BUENOS AIRES EZEIZA":     ("#74c0fc", "Buenos Aires"),
-    "MENDOZA AERO":            ("#a5d8ff", "Mendoza"),
-    "BARILOCHE AERO":          ("#748ffc", "Bariloche"),
-    "RIO GALLEGOS AERO":       ("#da77f2", "Río Gallegos"),
+    "JUJUY AERO":          ("#ff6b6b", "Jujuy"),
+    "TUCUMAN AERO":        ("#ffa94d", "Tucumán"),
+    "CORDOBA AERO":        ("#63e6be", "Córdoba"),
+    "BUENOS AIRES EZEIZA": ("#74c0fc", "Buenos Aires"),
+    "MENDOZA AERO":        ("#a5d8ff", "Mendoza"),
+    "BARILOCHE AERO":      ("#748ffc", "Bariloche"),
+    "RIO GALLEGOS AERO":   ("#da77f2", "Río Gallegos"),
 }
 
 # ============================================================
@@ -60,17 +60,14 @@ for ax, data, titulo in [
     (ax1, tmax, "Temperatura Máxima Mensual por Estación"),
     (ax2, tmin, "Temperatura Mínima Mensual por Estación"),
 ]:
-    # Fondo de rango total (todas las estaciones)
     band_max = data.max(skipna=True)
     band_min = data.min(skipna=True)
     ax.fill_between(range(12), band_min, band_max, alpha=0.08, color="#58a6ff")
 
-    # Líneas grises para estaciones no destacadas
     for est in data.index:
         if est not in ESTACIONES_DESTACADAS:
             ax.plot(range(12), data.loc[est], color="#30363d", linewidth=0.6, alpha=0.5)
 
-    # Líneas de color para estaciones destacadas
     for est, (color, label) in ESTACIONES_DESTACADAS.items():
         if est in data.index:
             ax.plot(range(12), data.loc[est], color=color, linewidth=2,
@@ -97,8 +94,8 @@ print("Gráfico 1 guardado.")
 # ============================================================
 # GRÁFICO 2 — Temperatura promedio nacional por mes
 # ============================================================
-tmax_prom  = tmax.mean(skipna=True)
-tmin_prom  = tmin.mean(skipna=True)
+tmax_prom   = tmax.mean(skipna=True)
+tmin_prom   = tmin.mean(skipna=True)
 tmedia_prom = (tmax_prom + tmin_prom) / 2
 
 fig, ax = plt.subplots(figsize=(13, 7))
@@ -106,7 +103,6 @@ fig.patch.set_facecolor("#0d1117")
 
 ax.fill_between(range(12), tmin_prom, tmax_prom,
                 alpha=0.25, color="#8b4513", label="Rango Máx-Mín")
-
 ax.plot(range(12), tmax_prom,   color="#ff6b6b", linewidth=2.5, marker="o",
         markersize=6, label="Promedio Máxima", zorder=5)
 ax.plot(range(12), tmedia_prom, color="#63e6be", linewidth=2, marker="s",
@@ -114,7 +110,6 @@ ax.plot(range(12), tmedia_prom, color="#63e6be", linewidth=2, marker="s",
 ax.plot(range(12), tmin_prom,   color="#74c0fc", linewidth=2.5, marker="^",
         markersize=6, label="Promedio Mínima", zorder=5)
 
-# Etiquetas de valor
 for i in range(12):
     ax.annotate(f"{tmax_prom[i]:.1f}", (i, tmax_prom[i]),
                 textcoords="offset points", xytext=(0, 8),
@@ -148,15 +143,13 @@ print("Gráfico 2 guardado.")
 # ============================================================
 prec_anual = prec.sum(axis=1, skipna=True).sort_values(ascending=False)
 
-# Nombres más cortos para el eje
 def acortar(nombre):
     return nombre.replace(" AERO", "").replace(" OBS.", "").replace(" B.A.", " B.A.").title()
 
 etiquetas = [acortar(e) for e in prec_anual.index]
 
-# Colormap azul como en la referencia
-norm   = Normalize(vmin=prec_anual.min(), vmax=prec_anual.max())
-cmap   = plt.cm.YlGnBu
+norm    = Normalize(vmin=prec_anual.min(), vmax=prec_anual.max())
+cmap    = plt.cm.YlGnBu
 colores = [cmap(norm(v)) for v in prec_anual.values]
 
 fig_height = max(10, len(prec_anual) * 0.28)
@@ -166,12 +159,10 @@ fig.patch.set_facecolor("#0d1117")
 bars = ax.barh(etiquetas, prec_anual.values, color=colores,
                edgecolor="#21262d", linewidth=0.4, height=0.75)
 
-# Etiquetas de valor
 for bar, val in zip(bars, prec_anual.values):
     ax.text(val + 15, bar.get_y() + bar.get_height() / 2,
             f"{val:.0f} mm", va="center", ha="left", fontsize=7.5, color="#c9d1d9")
 
-# Colorbar
 sm = ScalarMappable(cmap=cmap, norm=norm)
 sm.set_array([])
 cbar = plt.colorbar(sm, ax=ax, pad=0.01)
